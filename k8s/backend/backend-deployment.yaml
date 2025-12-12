@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: stock-game
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z postgres-service 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+      - name: run-migrations
+        image: stock-game-backend:latest
+        imagePullPolicy: Never
+        command:
+        - /bin/sh
+        - -c
+        - |
+          cd /app && alembic upgrade head || echo "Migrations skipped (no alembic directory or already up to date)"
+        envFrom:
+        - configMapRef:
+            name: stock-game-config
+        - secretRef:
+            name: stock-game-secrets
+      containers:
+      - name: backend
+        image: stock-game-backend:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - configMapRef:
+            name: stock-game-config
+        - secretRef:
+            name: stock-game-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3

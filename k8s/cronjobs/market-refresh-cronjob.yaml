@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: market-refresh
+  namespace: stock-game
+spec:
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: market-refresh
+            image: stock-game-backend:latest
+            imagePullPolicy: Never
+            command:
+            - python
+            - -m
+            - app.tasks.market_refresh
+            envFrom:
+            - configMapRef:
+                name: stock-game-config
+            - secretRef:
+                name: stock-game-secrets
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+          restartPolicy: OnFailure
+      backoffLimit: 3

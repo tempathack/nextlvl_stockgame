@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sp500-initial-load
+  namespace: stock-game
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z postgres-service 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+      containers:
+      - name: sp500-seed
+        image: stock-game-backend:latest
+        imagePullPolicy: Never
+        command:
+        - sh
+        - -c
+        - |
+          echo "Running full 2-year daily backfill for S&P 500..." && \
+          python -m app.tasks.sp500_daily_fetch --full && \
+          echo "Running 7-day hourly backfill for S&P 500..." && \
+          python -m app.tasks.sp500_hourly_fetch --full
+        envFrom:
+        - configMapRef:
+            name: stock-game-config
+        - secretRef:
+            name: stock-game-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+      restartPolicy: Never
+  backoffLimit: 1

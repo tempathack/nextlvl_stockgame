@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: insider-trades-initial-load
+  namespace: stock-game
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z postgres-service 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+      containers:
+      - name: insider-trades-seed
+        image: stock-game-backend:latest
+        imagePullPolicy: Never
+        command:
+        - sh
+        - -c
+        - |
+          echo "Running 30-day backfill for SEC insider trades..." && \
+          python -m app.tasks.insider_trades_fetch --full && \
+          echo "Insider trades backfill complete."
+        envFrom:
+        - configMapRef:
+            name: stock-game-config
+        - secretRef:
+            name: stock-game-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+      restartPolicy: Never
+  backoffLimit: 2

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: stock-game
+data:
+  01-init-schemas.sql: |
+    -- Create schemas for logical separation
+    CREATE SCHEMA IF NOT EXISTS users;
+    CREATE SCHEMA IF NOT EXISTS market_data;
+    CREATE SCHEMA IF NOT EXISTS game;
+
+    -- Grant permissions
+    GRANT ALL ON SCHEMA users TO stock_game;
+    GRANT ALL ON SCHEMA market_data TO stock_game;
+    GRANT ALL ON SCHEMA game TO stock_game;
+
+    -- Set search path
+    ALTER DATABASE stock_game SET search_path TO public, users, market_data, game;

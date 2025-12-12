@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stock-game-config
+  namespace: stock-game
+data:
+  # Application
+  ENVIRONMENT: "production"
+  DEBUG: "false"
+  PROJECT_NAME: "180-Day Stock Trading Game"
+  API_PREFIX: "/api"
+
+  # Database
+  DATABASE__POSTGRES_HOST: "postgres-service"
+  DATABASE__POSTGRES_PORT: "5432"
+  DATABASE__POSTGRES_DB: "stock_game"
+  DATABASE__POOL_SIZE: "10"
+  DATABASE__POOL_TIMEOUT: "30"
+
+  # Redis
+  DATABASE__REDIS_HOST: "redis-service"
+  DATABASE__REDIS_PORT: "6379"
+  DATABASE__REDIS_DB: "0"
+
+  # Game Configuration (set via .env)
+  GAME__START_DATE: "${GAME_START_DATE}"
+  GAME__DURATION_DAYS: "${GAME_DURATION_DAYS}"
+  GAME__STARTING_CAPITAL: "${STARTING_CAPITAL}"
+
+  # Trading Rules
+  TRADING__STARTING_CAPITAL: "${STARTING_CAPITAL}"
+  TRADING__GAME_DURATION_DAYS: "${GAME_DURATION_DAYS}"
+  TRADING__ALLOW_SHORT_SELLING: "true"
+  TRADING__ALLOW_BORROWING: "false"
+
+  # Market Data
+  MARKET_DATA__PROVIDER: "yahoo"
+  MARKET_DATA__REQUEST_TIMEOUT_SECONDS: "5"
+  MARKET_DATA__CACHE_TTL_SECONDS: "15"
