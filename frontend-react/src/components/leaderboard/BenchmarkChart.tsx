@@ -134,7 +134,11 @@ const generateBenchmarkData = (symbol: string, days: number): number[] => {
   return generateHistoricalData(scaledReturn, days);
 };
 
-const BenchmarkChart: React.FC = () => {
+interface BenchmarkChartProps {
+  height?: number;
+}
+
+const BenchmarkChart: React.FC<BenchmarkChartProps> = ({ height = 450 }) => {
   const theme = useTheme();
   const [selectedBenchmarks, setSelectedBenchmarks] = useState<string[]>(['SPY', 'QQQ', 'DIA']);
   const [selectedPlayers, setSelectedPlayers] = useState<number[]>([]);
@@ -486,7 +490,7 @@ const BenchmarkChart: React.FC = () => {
 
       {/* Chart */}
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Box sx={{ height: 450 }}>
+        <Box sx={{ height }}>
           {allSeries.length === 0 ? (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
               <Typography color="text.secondary">
@@ -498,6 +502,7 @@ const BenchmarkChart: React.FC = () => {
               option={option}
               style={{ height: '100%', width: '100%' }}
               opts={{ renderer: 'svg' }}
+              notMerge={true}
             />
           )}
         </Box>

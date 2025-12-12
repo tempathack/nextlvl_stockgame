@@ -1,12 +1,13 @@
 import React from 'react';
 import { Box, Grid, Paper, Typography, Button, Stack } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
-import { Analytics, TrendingUp } from '@mui/icons-material';
+import { Analytics, ShowChart } from '@mui/icons-material';
 import SectorHeatmap from '../../components/dashboard/SectorHeatmap';
 import SP500Treemap from '../../components/dashboard/SP500Treemap';
 import TopMovers from '../../components/dashboard/TopMovers';
 import MarketIndices from '../../components/dashboard/MarketIndices';
 import NewsFeed from '../../components/dashboard/NewsFeed';
+import BenchmarkChart from '../../components/leaderboard/BenchmarkChart';
 
 /**
  * Dashboard Page - Public
@@ -42,6 +43,28 @@ const Dashboard: React.FC = () => {
       </Box>
 
       <Grid container spacing={3}>
+        {/* Performance vs Benchmarks - Featured Section */}
+        <Grid item xs={12}>
+          <Paper
+            sx={{
+              p: 3,
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+              border: '1px solid rgba(0, 230, 118, 0.2)',
+            }}
+          >
+            <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <ShowChart sx={{ color: '#00E676', fontSize: 28 }} />
+              <Typography variant="h5" fontWeight="bold" sx={{ color: '#fff' }}>
+                Performance vs Benchmarks
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Compare player performance against major market indices and ETFs. Toggle players and benchmarks to customize the view.
+            </Typography>
+            <BenchmarkChart height={550} />
+          </Paper>
+        </Grid>
+
         {/* Market Indices - Full Width */}
         <Grid item xs={12}>
           <MarketIndices />
