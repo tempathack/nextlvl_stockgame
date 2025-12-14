@@ -6,7 +6,6 @@ import SectorHeatmap from '../../components/dashboard/SectorHeatmap';
 import SP500Treemap from '../../components/dashboard/SP500Treemap';
 import TopMovers from '../../components/dashboard/TopMovers';
 import MarketIndices from '../../components/dashboard/MarketIndices';
-import NewsFeed from '../../components/dashboard/NewsFeed';
 import BenchmarkChart from '../../components/leaderboard/BenchmarkChart';
 
 /**
@@ -83,21 +82,6 @@ const Dashboard: React.FC = () => {
         {/* S&P 500 Treemap - Full Width */}
         <Grid item xs={12}>
           <SP500Treemap />
-        </Grid>
-
-        {/* News Feed - Full Width */}
-        <Grid item xs={12}>
-          <Paper
-            sx={{
-              p: 3,
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-            }}
-          >
-            <Typography variant="h6" gutterBottom fontWeight="bold" sx={{ color: '#fff' }}>
-              Market News
-            </Typography>
-            <NewsFeed />
-          </Paper>
         </Grid>
       </Grid>
     </Box>

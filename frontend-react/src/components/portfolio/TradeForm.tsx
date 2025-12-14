@@ -44,7 +44,7 @@ interface TradeFormProps {
   onTradeSuccess?: () => void;
 }
 
-type OrderSide = 'buy' | 'sell' | 'short' | 'cover';
+type OrderSide = 'buy' | 'sell';
 
 const TradeForm: React.FC<TradeFormProps> = ({ availableCash, positions, onTradeSuccess }) => {
   const queryClient = useQueryClient();
@@ -135,27 +135,34 @@ const TradeForm: React.FC<TradeFormProps> = ({ availableCash, positions, onTrade
     const subtotal = qty * price;
     const fee = subtotal * TRADING_FEE_RATE;
 
-    // For BUY/SHORT: Total = subtotal + fee (deducted from cash)
-    // For SELL/COVER: Net Proceeds = subtotal - fee (received in cash)
-    const isBuySide = side === 'buy' || side === 'short';
+    // For BUY: Total = subtotal + fee (deducted from cash)
+    // For SELL: Net Proceeds = subtotal - fee (received in cash)
+    const isBuySide = side === 'buy';
     const total = isBuySide ? subtotal + fee : subtotal - fee;
 
     return { subtotal, fee, total, isBuySide };
   };
 
   const orderSummary = calculateOrderSummary();
-  // For BUY/SHORT: need cash to cover the total cost
-  // For SELL/COVER: no cash check needed (backend validates share ownership)
+
+  // Find current position for selected symbol
+  const currentPosition = positions?.find(p => p.symbol === symbol);
+  const ownedShares = currentPosition ? Number(currentPosition.quantity) : 0;
+
+  // Calculate max shares that can be bought with available cash
+  const maxBuyShares = quote ? Math.floor(availableCash / (Number(quote.price) * (1 + TRADING_FEE_RATE))) : 0;
+
+  // For BUY: need cash to cover the total cost
+  // For SELL: check if user owns enough shares
   const canAfford = orderSummary
     ? (orderSummary.isBuySide ? orderSummary.total <= availableCash : true)
     : true;
-  const isValid = symbol && quantity && parseFloat(quantity) > 0 && canAfford;
+  const hasEnoughShares = side === 'sell' ? (parseFloat(quantity) || 0) <= ownedShares : true;
+  const isValid = symbol && quantity && parseFloat(quantity) > 0 && canAfford && hasEnoughShares;
 
   const sideColors = {
     buy: 'success',
     sell: 'error',
-    short: 'warning',
-    cover: 'info',
   } as const;
 
   return (
@@ -183,18 +190,6 @@ const TradeForm: React.FC<TradeFormProps> = ({ availableCash, positions, onTrade
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <TrendingDown fontSize="small" color="error" />
                 Sell
-              </Box>
-            </MenuItem>
-            <MenuItem value="short">
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TrendingDown fontSize="small" color="warning" />
-                Short
-              </Box>
-            </MenuItem>
-            <MenuItem value="cover">
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TrendingUp fontSize="small" color="info" />
-                Cover
               </Box>
             </MenuItem>
           </Select>
@@ -287,6 +282,14 @@ const TradeForm: React.FC<TradeFormProps> = ({ availableCash, positions, onTrade
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
           inputProps={{ min: 1, step: 1 }}
+          error={side === 'sell' && !hasEnoughShares}
+          helperText={
+            symbol && quote
+              ? side === 'sell'
+                ? `You own ${ownedShares.toLocaleString()} shares${!hasEnoughShares ? ' (insufficient)' : ''}`
+                : `Max: ${maxBuyShares.toLocaleString()} shares (with available cash)`
+              : undefined
+          }
           sx={{ mb: 2 }}
         />
 
@@ -347,6 +350,12 @@ const TradeForm: React.FC<TradeFormProps> = ({ availableCash, positions, onTrade
         {!canAfford && orderSummary && orderSummary.total > 0 && (
           <Alert severity="error" sx={{ mb: 2 }}>
             Insufficient cash. You need ${(orderSummary.total - availableCash).toFixed(2)} more.
+          </Alert>
+        )}
+
+        {side === 'sell' && !hasEnoughShares && symbol && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            Insufficient shares. You own {ownedShares.toLocaleString()} shares of {symbol}.
           </Alert>
         )}
 
