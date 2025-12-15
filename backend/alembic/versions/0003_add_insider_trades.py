@@ -9,7 +9,7 @@ import sqlalchemy as sa
 
 # revision identifiers
 revision = "0003_add_insider_trades"
-down_revision = "0002_add_trading_fees"
+down_revision = "0001_initial"
 branch_labels = None
 depends_on = None
 
