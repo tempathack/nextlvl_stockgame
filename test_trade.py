@@ -37,7 +37,7 @@ def trade(token, symbol, side, quantity):
 
 if __name__ == "__main__":
     print("Logging in as flo...")
-    token = login("flo", "Alpine3Summit!")
+    token = login("flo", "test123")
     print(f"Token obtained: {token[:30]}...")
 
     print("\nTrying to BUY 5 AAPL...")
