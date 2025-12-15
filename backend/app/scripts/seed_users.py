@@ -15,7 +15,7 @@ sys.path.insert(0, "/app")
 from app.db.session import AsyncSessionLocal
 from app.models.user import User, Profile
 from app.models.portfolio import Portfolio, Position
-from app.models.stock import StockDailyHistory
+from app.models.sp500 import StockDailyHistory
 
 # Game start date - FIXED DATE
 GAME_START_DATE = date(2025, 12, 10)
