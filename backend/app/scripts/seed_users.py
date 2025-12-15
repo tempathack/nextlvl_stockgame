@@ -2,7 +2,7 @@
 
 import asyncio
 import sys
-from datetime import datetime
+from datetime import datetime, date
 from decimal import Decimal
 
 import bcrypt
@@ -15,7 +15,10 @@ sys.path.insert(0, "/app")
 from app.db.session import AsyncSessionLocal
 from app.models.user import User, Profile
 from app.models.portfolio import Portfolio, Position
-from app.integrations.market_data import MarketDataProvider
+from app.models.stock import StockDailyHistory
+
+# Game start date - FIXED DATE
+GAME_START_DATE = date(2025, 12, 10)
 
 
 def hash_password(password: str) -> str:
@@ -154,11 +157,22 @@ PORTFOLIOS = {
 }
 
 
-async def get_current_price(market_data: MarketDataProvider, symbol: str) -> Decimal | None:
-    """Fetch current price for a symbol, returns None if unavailable."""
+async def get_historical_price(session: AsyncSession, symbol: str, target_date: date) -> Decimal | None:
+    """Fetch historical price for a symbol from database, returns None if unavailable."""
     try:
-        quote = await market_data.quote(symbol)
-        return quote.price
+        # Try to get price from stock_daily_history table
+        result = await session.execute(
+            select(StockDailyHistory)
+            .where(StockDailyHistory.symbol == symbol.upper())
+            .where(StockDailyHistory.date <= target_date)
+            .order_by(StockDailyHistory.date.desc())
+            .limit(1)
+        )
+        history = result.scalar_one_or_none()
+        if history:
+            return history.close
+        print(f"  [SKIP] No historical price for {symbol} on {target_date}")
+        return None
     except Exception as e:
         print(f"  [SKIP] Could not fetch price for {symbol}: {e}")
         return None
@@ -166,7 +180,6 @@ async def get_current_price(market_data: MarketDataProvider, symbol: str) -> Dec
 
 async def seed_user(
     session: AsyncSession,
-    market_data: MarketDataProvider,
     username: str,
     allocations: dict[str, float],
 ) -> None:
@@ -222,11 +235,8 @@ async def seed_user(
     positions_created = 0
 
     for symbol, allocation_pct in allocations.items():
-        # Add delay between requests to avoid rate limiting
-        if positions_created > 0:
-            await asyncio.sleep(0.5)
-
-        price = await get_current_price(market_data, symbol)
+        # Get historical price from game start date
+        price = await get_historical_price(session, symbol, GAME_START_DATE)
         if price is None:
             continue
 
@@ -277,16 +287,14 @@ async def seed_users() -> None:
     print("=" * 60)
     print("Stock Game User Seed Script")
     print("=" * 60)
+    print(f"Game start date: {GAME_START_DATE}")
     print(f"Users to create: {', '.join(PORTFOLIOS.keys())}")
-    print(f"Password format: {{username}}123")
     print(f"Starting capital: ${STARTING_CAPITAL:,.2f}")
-
-    market_data = MarketDataProvider()
 
     async with AsyncSessionLocal() as session:
         for username, allocations in PORTFOLIOS.items():
             try:
-                await seed_user(session, market_data, username, allocations)
+                await seed_user(session, username, allocations)
             except Exception as e:
                 print(f"  [ERROR] Failed to create {username}: {e}")
                 await session.rollback()
