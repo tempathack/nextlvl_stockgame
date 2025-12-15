@@ -188,6 +188,7 @@ async def get_my_portfolio(
             "pnl": float(pnl),
             "pnl_pct": float(pnl_pct),
             "is_short": pos.is_short,
+            "purchased_at": pos.created_at.isoformat() if pos.created_at else None,
         })
 
     # Sort by market value descending

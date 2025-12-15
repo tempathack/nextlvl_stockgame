@@ -361,9 +361,17 @@ const TradeForm: React.FC<TradeFormProps> = ({ availableCash, positions, onTrade
 
         {tradeMutation.isError && (
           <Alert severity="error" sx={{ mb: 2 }}>
-            {tradeMutation.error instanceof Error
-              ? tradeMutation.error.message
-              : 'Failed to submit trade. Please try again.'}
+            {(() => {
+              const error = tradeMutation.error as any;
+              // Extract error detail from Axios response
+              if (error?.response?.data?.detail) {
+                return error.response.data.detail;
+              }
+              if (error?.message) {
+                return error.message;
+              }
+              return 'Failed to submit trade. Please try again.';
+            })()}
           </Alert>
         )}
 

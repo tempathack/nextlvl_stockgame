@@ -23,6 +23,7 @@ interface Position {
   current_price: number | null;
   market_value: number;
   is_short: boolean;
+  purchased_at?: string | null;
   // Support both naming conventions
   pnl?: number | null;
   pnl_pct?: number | null;
@@ -131,6 +132,7 @@ const PositionsTable: React.FC<PositionsTableProps> = ({ positions, onRowClick }
                 </TableSortLabel>
               </TableCell>
               <TableCell>Type</TableCell>
+              <TableCell align="right">Purchased</TableCell>
               <TableCell align="right">
                 <TableSortLabel
                   active={orderBy === 'quantity'}
@@ -197,6 +199,13 @@ const PositionsTable: React.FC<PositionsTableProps> = ({ positions, onRowClick }
                       color={position.is_short ? 'warning' : 'primary'}
                       variant="outlined"
                     />
+                  </TableCell>
+                  <TableCell align="right">
+                    <Typography variant="body2" color="text.secondary">
+                      {position.purchased_at
+                        ? new Date(position.purchased_at).toLocaleDateString()
+                        : '-'}
+                    </Typography>
                   </TableCell>
                   <TableCell align="right">
                     <Typography variant="body2">
